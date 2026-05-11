@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER STUDIOS | Visual Engine</title>
+    <!-- Fonts -->
+    <link href="https://googleapis.com" rel="stylesheet">
+    <!-- Fabric.js Library -->
+    <script src="https://cloudflare.com"></script>
+    
+    <style>
+        :root {
+            --bg-app: #f0f2f5; --bg-canvas: #ffffff; --text-main: #1a1a1a;
+            --toolbar: rgba(255, 255, 255, 0.9); --accent: #3793ff; --dot: #ccc;
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #0d0d0d; --bg-canvas: #1a1a1a; --text-main: #f0f0f0;
+            --toolbar: rgba(30, 30, 30, 0.9); --accent: #3793ff; --dot: #333;
+        }
+
+        body { 
+            margin: 0; background-color: var(--bg-app); color: var(--text-main); 
+            font-family: 'Inter', sans-serif; transition: 0.3s; overflow: hidden; 
+        }
+
+        .editor-container { 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 10px; height: 100vh; 
+        }
+
+        .brand-header h1 {
+            font-family: 'Montserrat', sans-serif; font-size: 14px;
+            letter-spacing: 5px; margin: 5px 0 15px 0; text-transform: uppercase;
+        }
+        .brand-header span { font-weight: 200; opacity: 0.5; }
+
+        .toolbar {
+            background: var(--toolbar); backdrop-filter: blur(15px); padding: 8px 20px;
+            border-radius: 50px; display: flex; gap: 10px; margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000; flex-wrap: wrap; justify-content: center;
+        }
+
+        .group { 
+            display: flex; gap: 8px; align-items: center; 
+            border-right: 1px solid rgba(128,128,128,0.2); padding-right: 12px; 
+        }
+        .group:last-child { border: none; padding: 0; }
+
+        .canvas-wrapper { 
+            background: var(--bg-canvas); border-radius: 8px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            background-image: radial-gradient(var(--dot) 1px, transparent 1px); 
+            background-size: 20px 20px;
+            overflow: hidden; border: 1px solid rgba(128,128,128,0.2);
+        }
+
+        button, select {
+            padding: 6px; border-radius: 8px; border: 1px solid rgba(128,128,128,0.1);
+            background: none; color: var(--text-main); font-size: 14px; font-weight: bold;
+            cursor: pointer; transition: 0.2s; outline: none; min-width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        select { width: 100px; padding: 0 5px; }
+
+        button:hover { background: var(--accent); color: white; transform: translateY(-2px); }
+        .success-btn { background: #2ecc71 !important; color: white !important; }
+        .danger-btn:hover { background: #e74c3c !important; color: white !important; }
+
+        input[type="color"] { width: 30px; height: 30px; border: none; background: none; cursor: pointer; }
+        .hidden-input { display: none; }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="editor-container">
+        <div class="brand-header">
+            <h1>AETHER <span>STUDIOS</span></h1>
+        </div>
+
+        <div class="toolbar">
+            <!-- Basic Shapes -->
+            <div class="group">
+                <button onclick="addGraphic('rect')" title="Square">▢</button>
+                <button onclick="addGraphic('circle')" title="Circle">○</button>
+                <button onclick="addGraphic('star')" title="Star">☆</button>
+                <button onclick="addText()" title="Text">T</button>
+                <button onclick="document.getElementById('photoInput').click()" title="Upload">🖼️</button>
+                <input type="file" id="photoInput" class="hidden-input" onchange="uploadPhoto(event)">
+            </div>
+
+            <!-- Layering -->
+            <div class="group">
+                <button onclick="changeLayer('forward')" title="Bring Forward">↑</button>
+                <button onclick="changeLayer('backward')" title="Send Backward">↓</button>
+            </div>
+
+            <!-- Filters & Style -->
+            <div class="group">
+                <select onchange="applyFilter(this.value)">
+                    <option value="none">Normal</option>
+                    <option value="grayscale">Grayscale</option>
+                    <option value="invert">Invert</option>
+                    <option value="sepia">Sepia</option>
+                    <option value="pixelate">Pixelate</option>
+                </select>
+                <input type="color" onchange="updateColor(this.value)" value="#3793ff">
+            </div>
+
+            <!-- Actions -->
+            <div class="group">
+                <button onclick="undo()" title="Undo">↶</button>
+                <button onclick="toggleTheme()" title="Theme">🌓</button>
+                <button class="danger-btn" onclick="deleteSelected()" title="Delete">✕</button>
+                <button class="success-btn" onclick="exportToImage()" title="Export">SAVE</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="canva2"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 1. ENGINE INIT
+        const canvas = new fabric.Canvas('canva2', {
+            width: 800, height: 500, backgroundColor: 'transparent', preserveObjectStacking: true
+        });
+
+        let undoStack = [];
+        let isStateChanging = false;
+
+        function saveState() {
+            if (isStateChanging) return;
+            undoStack.push(JSON.stringify(canvas.toJSON()));
+            if (undoStack.length > 30) undoStack.shift();
+        }
+
+        canvas.on('object:modified', saveState);
+        canvas.on('object:added', saveState);
+
+        // 2. TOOLS
+        function addText() {
+            const t = new fabric.IText('AETHER_DATA', { 
+                left: 100, top: 100, fontFamily: 'Space Mono', fill: '#3793ff', fontSize: 40 
+            });
+            canvas.add(t).setActiveObject(t);
+            saveState();
+        }
+
+        function uploadPhoto(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (f) => {
+                fabric.Image.fromURL(f.target.result, (img) => {
+                    img.scaleToWidth(400);
+                    canvas.add(img).centerObject(img).setActiveObject(img);
+                    saveState();
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addGraphic(type) {
+            let shape;
+            const p = { left: 200, top: 200, fill: '#3793ff', width: 100, height: 100 };
+            if(type === 'rect') shape = new fabric.Rect({...p, rx: 10, ry: 10});
+            if(type === 'circle') shape = new fabric.Circle({...p, radius: 50});
+            if(type === 'star') shape = new fabric.Polygon([
+                {x:50,y:0},{x:61,y:35},{x:98,y:35},{x:68,y:57},{x:79,y:91},{x:50,y:70},{x:21,y:91},{x:32,y:57},{x:2,y:35},{x:39,y:35}
+            ], p);
+            if(shape) { canvas.add(shape).setActiveObject(shape); saveState(); }
+        }
+
+        // 3. UPDATES & LAYERS
+        window.updateColor = (v) => {
+            const obj = canvas.getActiveObject();
+            if (obj) { obj.set('fill', v); canvas.renderAll(); saveState(); }
+        };
+
+        window.changeLayer = (dir) => {
+            const obj = canvas.getActiveObject();
+            if (!obj) return;
+            dir === 'forward' ? obj.bringForward() : obj.sendBackwards();
+            canvas.renderAll();
+            saveState();
+        };
+
+        window.applyFilter = (type) => {
+            const obj = canvas.getActiveObject();
+            if (!obj || obj.type !== 'image') return;
+            obj.filters = [];
+            if (type === 'grayscale') obj.filters.push(new fabric.Image.filters.Grayscale());
+            if (type === 'invert') obj.filters.push(new fabric.Image.filters.Invert());
+            if (type === 'sepia') obj.filters.push(new fabric.Image.filters.Sepia());
+            if (type === 'pixelate') obj.filters.push(new fabric.Image.filters.Pixelate({ blocksize: 8 }));
+            obj.applyFilters();
+            canvas.renderAll();
+        };
+
+        // 4. ACTIONS
+        window.deleteSelected = () => {
+            canvas.getActiveObjects().forEach(o => canvas.remove(o));
+            canvas.discardActiveObject().renderAll();
+            saveState();
+        };
+
+        window.undo = () => {
+            if (undoStack.length <= 1) return;
+            isStateChanging = true;
+            undoStack.pop();
+            canvas.loadFromJSON(undoStack[undoStack.length - 1], () => {
+                canvas.renderAll();
+                isStateChanging = false;
+            });
+        };
+
+        window.toggleTheme = () => {
+            const b = document.body;
+            b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        };
+
+        window.exportToImage = () => {
+            const link = document.createElement('a');
+            link.download = 'aether_export.png';
+            link.href = canvas.toDataURL({ format: 'png', multiplier: 2 });
+            link.click();
+        };
+
+        saveState();
+    </script>
+</body>
+</html>
