@@ -2,170 +2,148 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER STUDIOS | PRO</title>
+    <title>AETHER STUDIOS | PRO V7</title>
     <style>
         :root { --accent: #38bdf8; --bg: #050810; }
-        body { background: var(--bg); color: var(--accent); font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; }
-        .toolbar { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; gap: 8px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; width: 95%; }
-        .prop-panel { background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; font-size: 11px; border: 1px solid rgba(56, 189, 248, 0.3); flex-wrap: wrap; justify-content: center; }
-        button { background: var(--accent); color: #000; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
-        canvas { background: #000; border: 1px solid var(--accent); border-radius: 5px; touch-action: none; cursor: crosshair; }
-        select, input { background: #111; border: 1px solid var(--accent); color: white; border-radius: 4px; padding: 4px; font-size: 10px; }
-        .danger { background: #ff4d4d !important; color: white; }
-        .layer-btn { background: #555; color: white; }
+        body { background: var(--bg); color: var(--accent); font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; overflow: hidden; touch-action: none; }
+        .toolbar { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 5px; display: flex; gap: 6px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; width: 98%; }
+        .prop-panel { background: rgba(0,0,0,0.9); padding: 8px; border-radius: 10px; margin-bottom: 5px; display: flex; gap: 8px; align-items: center; font-size: 10px; border: 1px solid rgba(56, 189, 248, 0.3); flex-wrap: wrap; justify-content: center; width: 98%; }
+        button { background: var(--accent); color: #000; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 9px; text-transform: uppercase; }
+        canvas { background: #000; border: 1px solid var(--accent); border-radius: 4px; touch-action: none; max-width: 95vw; max-height: 65vh; box-shadow: 0 0 15px rgba(56,189,248,0.1); }
+        input { background: #111; border: 1px solid var(--accent); color: white; border-radius: 3px; padding: 2px; font-size: 9px; }
+        .btn-green { background: #2ecc71 !important; }
+        .btn-red { background: #e74c3c !important; color: white !important; }
     </style>
 </head>
 <body>
-
     <div class="toolbar">
-        <button onclick="addShape('rect')">SQUARE</button>
-        <button onclick="addShape('circle')">CIRCLE</button>
-        <button onclick="addText()">TEXT</button>
-        <button onclick="document.getElementById('imgIn').click()">+ PHOTO</button>
-        <input type="file" id="imgIn" style="display:none" onchange="addPhoto(event)">
-        <button onclick="saveDesign()" style="background:#2ecc71">SAVE PNG</button>
-        <button onclick="clearAll()" class="danger">RESET</button>
+        <button onclick="addShape('rect')">Square</button>
+        <button onclick="addShape('circle')">Circle</button>
+        <button onclick="addShape('star')">Star</button>
+        <button onclick="addShape('heart')">Heart</button>
+        <button onclick="addText()">Text</button>
+        <button onclick="undo()">Undo</button>
+        <button onclick="cloneSelected()" style="background:#f1c40f">Clone</button>
+        <button onclick="saveDesign()" class="btn-green">Save PNG</button>
+        <button onclick="clearAll()" class="btn-red">Reset</button>
     </div>
 
     <div class="prop-panel">
-        <input type="color" id="colPick" onchange="updateProp()">
-        <select id="fontPick" onchange="updateProp()">
-            <option value="sans-serif">MODERN</option>
-            <option value="monospace">CYBER</option>
-            <option value="serif">CLASSIC</option>
-            <option value="cursive">ELEGANT</option>
-            <option value="Impact">GAME</option>
-        </select>
-        <span>SIZE: <input type="range" id="sizePick" min="10" max="600" oninput="updateProp()"></span>
-        <button class="layer-btn" onclick="moveLayer('up')">BRING FRONT</button>
-        <button class="layer-btn" onclick="moveLayer('down')">SEND BACK</button>
-        <button onclick="deleteSelected()" class="danger">DEL</button>
+        BG1: <input type="color" id="bg1" value="#050810" onchange="render()">
+        BG2: <input type="color" id="bg2" value="#0a1a2f" onchange="render()">
+        <button onclick="toggleGrad()" id="gradBtn">Grad: OFF</button>
+        COLOR: <input type="color" id="colPick" onchange="updateProp()">
+        W: <input type="range" id="wPick" min="5" max="500" oninput="updateProp()">
+        H: <input type="range" id="hPick" min="5" max="500" oninput="updateProp()">
+        ROT: <input type="range" id="rotPick" min="0" max="360" oninput="updateProp()">
+        <button onclick="deleteSelected()" class="btn-red">Del</button>
     </div>
 
     <canvas id="mainCanvas" width="800" height="500"></canvas>
 
-    <script>
-        const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d');
-        let shapes = [];
-        let selected = null;
-        let isDragging = false;
-        let offset = { x: 0, y: 0 };
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let shapes = [], history = [], selected = null, isDragging = false, offset = { x: 0, y: 0 }, useGrad = false;
 
-        function addShape(type) {
-            const s = { type, x: 150, y: 150, w: 120, h: 120, color: '#38bdf8' };
-            shapes.push(s);
-            selected = s;
+function saveState() { history.push(JSON.stringify(shapes)); if(history.length > 20) history.shift(); }
+function undo() { if(history.length) { shapes = JSON.parse(history.pop()); selected = null; } }
+function toggleGrad() { useGrad = !useGrad; document.getElementById('gradBtn').innerText = `Grad: ${useGrad?'ON':'OFF'}`; }
+
+function addShape(type) {
+    saveState();
+    const s = { type, x: 350, y: 200, w: 100, h: 100, color: '#38bdf8', rotation: 0 };
+    shapes.push(s); selected = s;
+}
+
+function addText() {
+    const t = prompt("Text:", "AETHER");
+    if(t) {
+        saveState();
+        shapes.push({ type: 'text', x: 300, y: 200, w: 200, h: 50, color: '#38bdf8', content: t, rotation: 0 });
+        selected = shapes[shapes.length-1];
+    }
+}
+
+function cloneSelected() {
+    if(!selected) return;
+    saveState();
+    const copy = JSON.parse(JSON.stringify(selected));
+    copy.x += 20; copy.y += 20;
+    shapes.push(copy);
+    selected = copy;
+}
+
+function updateProp() {
+    if(!selected) return;
+    selected.color = document.getElementById('colPick').value;
+    selected.w = parseInt(document.getElementById('wPick').value);
+    selected.h = parseInt(document.getElementById('hPick').value);
+    selected.rotation = parseInt(document.getElementById('rotPick').value);
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+    const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) * (canvas.width/r.width), y = (e.clientY - r.top) * (canvas.height/r.height);
+    selected = [...shapes].reverse().find(s => x > s.x && x < s.x + s.w && y > s.y && y < s.y + s.h);
+    if(selected) {
+        isDragging = true;
+        offset = { x: x - selected.x, y: y - selected.y };
+        document.getElementById('colPick').value = selected.color || '#38bdf8';
+        document.getElementById('wPick').value = selected.w;
+        document.getElementById('hPick').value = selected.h;
+        document.getElementById('rotPick').value = selected.rotation;
+    }
+});
+
+window.addEventListener('pointermove', (e) => {
+    if(!isDragging || !selected) return;
+    const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) * (canvas.width/r.width), y = (e.clientY - r.top) * (canvas.height/r.height);
+    selected.x = x - offset.x;
+    selected.y = y - offset.y;
+});
+window.addEventListener('pointerup', () => isDragging = false);
+
+function render() {
+    // Background
+    if(useGrad) {
+        let g = ctx.createLinearGradient(0,0,0,canvas.height);
+        g.addColorStop(0, document.getElementById('bg1').value);
+        g.addColorStop(1, document.getElementById('bg2').value);
+        ctx.fillStyle = g;
+    } else {
+        ctx.fillStyle = document.getElementById('bg1').value;
+    }
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    shapes.forEach(s => {
+        ctx.save();
+        ctx.fillStyle = s.color;
+        ctx.translate(s.x + s.w/2, s.y + s.h/2);
+        ctx.rotate(s.rotation * Math.PI / 180);
+        
+        if(s.type === 'rect') ctx.fillRect(-s.w/2, -s.h/2, s.w, s.h);
+        else if(s.type === 'circle') { ctx.beginPath(); ctx.ellipse(0, 0, s.w/2, s.h/2, 0, 0, Math.PI*2); ctx.fill(); }
+        else if(s.type === 'star') {
+            ctx.beginPath(); for(let i=0; i<10; i++){ let r = (i%2===0)?s.w/2:s.w/4; ctx.lineTo(r*Math.cos(i*Math.PI/5), r*Math.sin(i*Math.PI/5)); }
+            ctx.closePath(); ctx.fill();
         }
-
-        function addText() {
-            const t = prompt("Text:", "AETHER");
-            if(t) {
-                const s = { type: 'text', x: 150, y: 150, w: 200, h: 60, color: '#38bdf8', content: t, font: 'sans-serif' };
-                shapes.push(s);
-                selected = s;
-            }
+        else if(s.type === 'heart') {
+            ctx.beginPath(); ctx.moveTo(0, s.h/4);
+            ctx.bezierCurveTo(0, 0, -s.w/2, 0, -s.w/2, s.h/4); ctx.bezierCurveTo(-s.w/2, s.h/2, 0, s.h*0.7, 0, s.h);
+            ctx.bezierCurveTo(0, s.h*0.7, s.w/2, s.h/2, s.w/2, s.h/4); ctx.bezierCurveTo(s.w/2, 0, 0, 0, 0, s.h/4); ctx.fill();
         }
+        else if(s.type === 'text') { ctx.font = `bold ${s.h}px sans-serif`; ctx.textAlign="center"; ctx.fillText(s.content, 0, s.h/3); }
 
-        function addPhoto(e) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const s = { type: 'photo', x: 100, y: 100, w: 250, h: (img.height/img.width)*250, img: img };
-                    shapes.push(s);
-                    selected = s;
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        }
+        if(selected === s) { ctx.strokeStyle="white"; ctx.lineWidth=2; ctx.strokeRect(-s.w/2, -s.h/2, s.w, s.h); }
+        ctx.restore();
+    });
+    requestAnimationFrame(render);
+}
 
-        function moveLayer(dir) {
-            if (!selected) return;
-            const idx = shapes.indexOf(selected);
-            if (dir === 'up' && idx < shapes.length - 1) {
-                [shapes[idx], shapes[idx + 1]] = [shapes[idx + 1], shapes[idx]];
-            } else if (dir === 'down' && idx > 0) {
-                [shapes[idx], shapes[idx - 1]] = [shapes[idx - 1], shapes[idx]];
-            }
-        }
-
-        function updateProp() {
-            if(!selected) return;
-            selected.color = document.getElementById('colPick').value;
-            const newSize = parseInt(document.getElementById('sizePick').value);
-            const ratio = selected.h / selected.w;
-            selected.w = newSize;
-            selected.h = (selected.type === 'photo' || selected.type === 'text') ? newSize * ratio : newSize;
-            if(selected.type === 'text') selected.font = document.getElementById('fontPick').value;
-        }
-
-        function saveDesign() {
-            const link = document.createElement('a');
-            link.download = 'Aether_Studio_Design.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        }
-
-        function deleteSelected() { if(selected) { shapes = shapes.filter(s => s !== selected); selected = null; } }
-        function clearAll() { if(confirm("Clear everything?")) { shapes = []; selected = null; } }
-
-        canvas.addEventListener('pointerdown', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            // Select from top-most layer first
-            selected = [...shapes].reverse().find(s => x > s.x && x < s.x + s.w && y > s.y && y < s.y + s.h);
-            if(selected) {
-                isDragging = true;
-                offset.x = x - selected.x; offset.y = y - selected.y;
-                document.getElementById('colPick').value = selected.color || '#38bdf8';
-                document.getElementById('sizePick').value = selected.w;
-            }
-        });
-
-        window.addEventListener('pointermove', (e) => {
-            if(!isDragging || !selected) return;
-            const rect = canvas.getBoundingClientRect();
-            selected.x = (e.clientX - rect.left) - offset.x;
-            selected.y = (e.clientY - rect.top) - offset.y;
-        });
-
-        window.addEventListener('pointerup', () => isDragging = false);
-
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Neon Grid Background
-            ctx.strokeStyle = "rgba(56, 189, 248, 0.08)";
-            for(let i=0; i<canvas.width; i+=25) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
-            for(let i=0; i<canvas.height; i+=25) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
-
-            shapes.forEach(s => {
-                ctx.fillStyle = s.color;
-                ctx.shadowBlur = (selected === s) ? 15 : 0;
-                ctx.shadowColor = s.color;
-
-                if(s.type === 'rect') ctx.fillRect(s.x, s.y, s.w, s.h);
-                if(s.type === 'circle') { ctx.beginPath(); ctx.arc(s.x+s.w/2, s.y+s.w/2, s.w/2, 0, Math.PI*2); ctx.fill(); }
-                if(s.type === 'text') { 
-                    ctx.font = `bold ${s.w/4}px ${s.font}`; 
-                    ctx.fillText(s.content, s.x, s.y + s.w/4); 
-                }
-                if(s.type === 'photo') { 
-                    ctx.shadowBlur = 0; 
-                    ctx.drawImage(s.img, s.x, s.y, s.w, s.h); 
-                }
-                
-                if(selected === s) { 
-                    ctx.strokeStyle = "white"; 
-                    ctx.lineWidth = 1; 
-                    ctx.strokeRect(s.x, s.y, s.w, s.h); 
-                }
-            });
-            requestAnimationFrame(render);
-        }
-        render();
-    </script>
+function saveDesign() { const l = document.createElement('a'); l.download = 'Aether_Design.png'; l.href = canvas.toDataURL(); l.click(); }
+function deleteSelected() { if(selected) { saveState(); shapes = shapes.filter(s => s !== selected); selected = null; } }
+function clearAll() { if(confirm("Clear All?")) { saveState(); shapes = []; selected = null; } }
+render();
+</script>
 </body>
 </html>
