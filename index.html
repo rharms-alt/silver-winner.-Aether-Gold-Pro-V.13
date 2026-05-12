@@ -2,58 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER STUDIOS | iPad Edition</title>
-    <!-- Using a very stable library source -->
-    <script src="https://cloudflare.com"></script>
+    <title>AETHER STUDIOS | Native Edition</title>
     <style>
-        body { background: #050810; color: #38bdf8; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        body { background: #050810; color: #38bdf8; font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         .toolbar { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 50px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #38bdf8; }
         button { background: #38bdf8; color: #050810; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
-        canvas { border: 2px solid #38bdf8; border-radius: 10px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
-        h1 { font-size: 18px; letter-spacing: 4px; margin-bottom: 10px; }
+        canvas { background: #0a0f1e; border: 2px solid #38bdf8; border-radius: 10px; cursor: crosshair; }
+        h1 { font-size: 18px; letter-spacing: 4px; margin-bottom: 5px; }
+        p { font-size: 10px; opacity: 0.6; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <h1>AETHER STUDIOS</h1>
+    <p>NATIVE ENGINE: ONLINE</p>
 
     <div class="toolbar">
-        <button onclick="addShape()">SPAWN SQUARE</button>
-        <button onclick="clearCanvas()" style="background:#ff4d4d">CLEAR</button>
+        <button onclick="addBox()">ADD SQUARE</button>
+        <button onclick="clearAll()" style="background:#ff4d4d">RESET</button>
     </div>
 
-    <div id="canvas-container"></div>
+    <canvas id="mainCanvas" width="600" height="400"></canvas>
 
     <script>
-        let shapes = [];
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        let boxes = [];
 
-        function setup() {
-            let cnv = createCanvas(600, 400);
-            cnv.parent('canvas-container');
+        // Draw Loop
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grid
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.1)";
+            for(let i=0; i<canvas.width; i+=20) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,400); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=20) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(600,i); ctx.stroke(); }
+
+            // Draw Boxes
+            boxes.forEach(b => {
+                ctx.fillStyle = "#38bdf8";
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#38bdf8";
+                ctx.fillRect(b.x, b.y, 80, 80);
+            });
+            requestAnimationFrame(render);
         }
 
-        function draw() {
-            background(10, 15, 30);
-            // Draw the grid
-            stroke(255, 10);
-            for (let i = 0; i < width; i += 20) line(i, 0, i, height);
-            for (let i = 0; i < height; i += 20) line(0, i, width, i);
-
-            // Draw your shapes
-            for (let s of shapes) {
-                fill(56, 189, 248);
-                noStroke();
-                rect(s.x, s.y, 100, 100, 10);
-            }
+        function addBox() {
+            boxes.push({ 
+                x: Math.random() * (canvas.width - 80), 
+                y: Math.random() * (canvas.height - 80) 
+            });
         }
 
-        function addShape() {
-            shapes.push({ x: random(50, 450), y: random(50, 250) });
-        }
+        function clearAll() { boxes = []; }
 
-        function clearCanvas() {
-            shapes = [];
-        }
+        render(); // Start the engine
     </script>
 </body>
 </html>
