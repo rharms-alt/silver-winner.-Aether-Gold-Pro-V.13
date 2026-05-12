@@ -2,62 +2,170 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER STUDIOS | Native Edition</title>
+    <title>AETHER STUDIOS | PRO</title>
     <style>
-        body { background: #050810; color: #38bdf8; font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .toolbar { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 50px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #38bdf8; }
-        button { background: #38bdf8; color: #050810; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
-        canvas { background: #0a0f1e; border: 2px solid #38bdf8; border-radius: 10px; cursor: crosshair; }
-        h1 { font-size: 18px; letter-spacing: 4px; margin-bottom: 5px; }
-        p { font-size: 10px; opacity: 0.6; margin-bottom: 20px; }
+        :root { --accent: #38bdf8; --bg: #050810; }
+        body { background: var(--bg); color: var(--accent); font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; }
+        .toolbar { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; gap: 8px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; width: 95%; }
+        .prop-panel { background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; font-size: 11px; border: 1px solid rgba(56, 189, 248, 0.3); flex-wrap: wrap; justify-content: center; }
+        button { background: var(--accent); color: #000; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
+        canvas { background: #000; border: 1px solid var(--accent); border-radius: 5px; touch-action: none; cursor: crosshair; }
+        select, input { background: #111; border: 1px solid var(--accent); color: white; border-radius: 4px; padding: 4px; font-size: 10px; }
+        .danger { background: #ff4d4d !important; color: white; }
+        .layer-btn { background: #555; color: white; }
     </style>
 </head>
 <body>
 
-    <h1>AETHER STUDIOS</h1>
-    <p>NATIVE ENGINE: ONLINE</p>
-
     <div class="toolbar">
-        <button onclick="addBox()">ADD SQUARE</button>
-        <button onclick="clearAll()" style="background:#ff4d4d">RESET</button>
+        <button onclick="addShape('rect')">SQUARE</button>
+        <button onclick="addShape('circle')">CIRCLE</button>
+        <button onclick="addText()">TEXT</button>
+        <button onclick="document.getElementById('imgIn').click()">+ PHOTO</button>
+        <input type="file" id="imgIn" style="display:none" onchange="addPhoto(event)">
+        <button onclick="saveDesign()" style="background:#2ecc71">SAVE PNG</button>
+        <button onclick="clearAll()" class="danger">RESET</button>
     </div>
 
-    <canvas id="mainCanvas" width="600" height="400"></canvas>
+    <div class="prop-panel">
+        <input type="color" id="colPick" onchange="updateProp()">
+        <select id="fontPick" onchange="updateProp()">
+            <option value="sans-serif">MODERN</option>
+            <option value="monospace">CYBER</option>
+            <option value="serif">CLASSIC</option>
+            <option value="cursive">ELEGANT</option>
+            <option value="Impact">GAME</option>
+        </select>
+        <span>SIZE: <input type="range" id="sizePick" min="10" max="600" oninput="updateProp()"></span>
+        <button class="layer-btn" onclick="moveLayer('up')">BRING FRONT</button>
+        <button class="layer-btn" onclick="moveLayer('down')">SEND BACK</button>
+        <button onclick="deleteSelected()" class="danger">DEL</button>
+    </div>
+
+    <canvas id="mainCanvas" width="800" height="500"></canvas>
 
     <script>
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
-        let boxes = [];
+        let shapes = [];
+        let selected = null;
+        let isDragging = false;
+        let offset = { x: 0, y: 0 };
 
-        // Draw Loop
+        function addShape(type) {
+            const s = { type, x: 150, y: 150, w: 120, h: 120, color: '#38bdf8' };
+            shapes.push(s);
+            selected = s;
+        }
+
+        function addText() {
+            const t = prompt("Text:", "AETHER");
+            if(t) {
+                const s = { type: 'text', x: 150, y: 150, w: 200, h: 60, color: '#38bdf8', content: t, font: 'sans-serif' };
+                shapes.push(s);
+                selected = s;
+            }
+        }
+
+        function addPhoto(e) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const s = { type: 'photo', x: 100, y: 100, w: 250, h: (img.height/img.width)*250, img: img };
+                    shapes.push(s);
+                    selected = s;
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function moveLayer(dir) {
+            if (!selected) return;
+            const idx = shapes.indexOf(selected);
+            if (dir === 'up' && idx < shapes.length - 1) {
+                [shapes[idx], shapes[idx + 1]] = [shapes[idx + 1], shapes[idx]];
+            } else if (dir === 'down' && idx > 0) {
+                [shapes[idx], shapes[idx - 1]] = [shapes[idx - 1], shapes[idx]];
+            }
+        }
+
+        function updateProp() {
+            if(!selected) return;
+            selected.color = document.getElementById('colPick').value;
+            const newSize = parseInt(document.getElementById('sizePick').value);
+            const ratio = selected.h / selected.w;
+            selected.w = newSize;
+            selected.h = (selected.type === 'photo' || selected.type === 'text') ? newSize * ratio : newSize;
+            if(selected.type === 'text') selected.font = document.getElementById('fontPick').value;
+        }
+
+        function saveDesign() {
+            const link = document.createElement('a');
+            link.download = 'Aether_Studio_Design.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function deleteSelected() { if(selected) { shapes = shapes.filter(s => s !== selected); selected = null; } }
+        function clearAll() { if(confirm("Clear everything?")) { shapes = []; selected = null; } }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            // Select from top-most layer first
+            selected = [...shapes].reverse().find(s => x > s.x && x < s.x + s.w && y > s.y && y < s.y + s.h);
+            if(selected) {
+                isDragging = true;
+                offset.x = x - selected.x; offset.y = y - selected.y;
+                document.getElementById('colPick').value = selected.color || '#38bdf8';
+                document.getElementById('sizePick').value = selected.w;
+            }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if(!isDragging || !selected) return;
+            const rect = canvas.getBoundingClientRect();
+            selected.x = (e.clientX - rect.left) - offset.x;
+            selected.y = (e.clientY - rect.top) - offset.y;
+        });
+
+        window.addEventListener('pointerup', () => isDragging = false);
+
         function render() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw Grid
-            ctx.strokeStyle = "rgba(56, 189, 248, 0.1)";
-            for(let i=0; i<canvas.width; i+=20) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,400); ctx.stroke(); }
-            for(let i=0; i<canvas.height; i+=20) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(600,i); ctx.stroke(); }
+            // Neon Grid Background
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.08)";
+            for(let i=0; i<canvas.width; i+=25) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=25) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
 
-            // Draw Boxes
-            boxes.forEach(b => {
-                ctx.fillStyle = "#38bdf8";
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = "#38bdf8";
-                ctx.fillRect(b.x, b.y, 80, 80);
+            shapes.forEach(s => {
+                ctx.fillStyle = s.color;
+                ctx.shadowBlur = (selected === s) ? 15 : 0;
+                ctx.shadowColor = s.color;
+
+                if(s.type === 'rect') ctx.fillRect(s.x, s.y, s.w, s.h);
+                if(s.type === 'circle') { ctx.beginPath(); ctx.arc(s.x+s.w/2, s.y+s.w/2, s.w/2, 0, Math.PI*2); ctx.fill(); }
+                if(s.type === 'text') { 
+                    ctx.font = `bold ${s.w/4}px ${s.font}`; 
+                    ctx.fillText(s.content, s.x, s.y + s.w/4); 
+                }
+                if(s.type === 'photo') { 
+                    ctx.shadowBlur = 0; 
+                    ctx.drawImage(s.img, s.x, s.y, s.w, s.h); 
+                }
+                
+                if(selected === s) { 
+                    ctx.strokeStyle = "white"; 
+                    ctx.lineWidth = 1; 
+                    ctx.strokeRect(s.x, s.y, s.w, s.h); 
+                }
             });
             requestAnimationFrame(render);
         }
-
-        function addBox() {
-            boxes.push({ 
-                x: Math.random() * (canvas.width - 80), 
-                y: Math.random() * (canvas.height - 80) 
-            });
-        }
-
-        function clearAll() { boxes = []; }
-
-        render(); // Start the engine
+        render();
     </script>
 </body>
 </html>
