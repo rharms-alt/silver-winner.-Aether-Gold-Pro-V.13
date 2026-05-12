@@ -15,6 +15,7 @@
         .active { background: #fff !important; color: #000 !important; box-shadow: 0 0 10px #fff; }
         .rec-active { background: #ff4d4d !important; animation: pulse 1s infinite; color: white !important; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .creator-btn { background: #a855f7 !important; color: white !important; }
     </style>
 </head>
 <body>
@@ -28,6 +29,7 @@
         <input type="file" id="imgIn" style="display:none" onchange="addPhoto(event)">
         <button id="pencilBtn" onclick="togglePencil()">Pencil</button>
         <button id="glowBtn" onclick="toggleGlow()">Glow</button>
+        <button id="chaosBtn" onclick="toggleChaos()">Chaos: OFF</button>
         <div style="display:flex; gap:3px; margin:0 5px;">
             <div class="swatch" style="background:#38bdf8" onclick="pickColor('#38bdf8')"></div>
             <div class="swatch" style="background:#f472b6" onclick="pickColor('#f472b6')"></div>
@@ -36,6 +38,7 @@
         <button id="recBtn" onclick="toggleRecord()">REC</button>
         <button onclick="undo()">Undo</button>
         <button onclick="saveDesign()" style="background:#2ecc71">PNG</button>
+        <button onclick="showCreator()" class="creator-btn">AI</button>
         <button onclick="clearAll()" style="background:#ff4d4d; color:white">Reset</button>
     </div>
 
@@ -55,14 +58,16 @@
 <script>
 const canvas = document.getElementById('mainCanvas'), ctx = canvas.getContext('2d');
 let shapes = [], history = [], selected = null, isDragging = false, isDrawing = false;
-let pencilMode = false, glowMode = false, offset = { x: 0, y: 0 };
+let pencilMode = false, glowMode = false, chaosMode = false, offset = { x: 0, y: 0 };
 let mediaRecorder, recordedChunks = [];
 
 function saveState() { history.push(JSON.stringify(shapes)); if(history.length > 30) history.shift(); }
 function undo() { if(history.length) { shapes = JSON.parse(history.pop()); selected = null; } }
 function togglePencil() { pencilMode = !pencilMode; document.getElementById('pencilBtn').classList.toggle('active'); selected = null; }
 function toggleGlow() { glowMode = !glowMode; document.getElementById('glowBtn').classList.toggle('active'); }
+function toggleChaos() { chaosMode = !chaosMode; document.getElementById('chaosBtn').classList.toggle('active'); document.getElementById('chaosBtn').innerText = chaosMode ? "Chaos: ON" : "Chaos: OFF"; }
 function pickColor(c) { document.getElementById('colPick').value = c; if(selected) selected.color = c; }
+function showCreator() { alert("AETHER STUDIOS | PRO GOLD\n\nDeveloped in collaboration with your AI partner.\nThank you for bringing this project to reality. Keep creating!"); }
 
 function addShape(type) { saveState(); shapes.push({ type, x: 340, y: 190, w: 120, h: 120, color: document.getElementById('colPick').value, rotation: 0 }); selected = shapes[shapes.length-1]; }
 function addText() { saveState(); const t = prompt("Text:","AETHER"); if(t) shapes.push({ type: 'text', x: 250, y: 220, w: 300, h: 70, color: '#38bdf8', content: t, rotation: 0 }); selected = shapes[shapes.length-1]; }
@@ -73,7 +78,7 @@ function addPhoto(e) {
         img.onload = () => { saveState(); shapes.push({ type: 'photo', x: 200, y: 100, w: 250, h: (img.height/img.width)*250, img, rotation: 0 }); selected = shapes[shapes.length-1]; };
         img.src = f.target.result;
     };
-    reader.readAsDataURL(e.target.files);
+    reader.readAsDataURL(e.target.files[0]);
 }
 
 function updateText() { if(selected?.type === 'text') selected.content = document.getElementById('textInput').value; }
@@ -106,6 +111,18 @@ window.addEventListener('pointermove', (e) => {
     if(isDragging && selected) { selected.x = x - offset.x; selected.y = y - offset.y; }
 });
 window.addEventListener('pointerup', () => { isDragging = isDrawing = false; });
+
+canvas.addEventListener('dblclick', (e) => {
+    if(!chaosMode) return;
+    saveState();
+    shapes.forEach(s => { 
+        if(s.type !== 'path') {
+            s.rotation += (Math.random()-0.5) * 60; 
+            s.x += (Math.random()-0.5)*100; 
+            s.y += (Math.random()-0.5)*100; 
+        }
+    });
+});
 
 function drawStar(ctx, r, p, m) {
     ctx.beginPath(); for (let i=0; i<p*2; i++) {
@@ -150,15 +167,15 @@ function toggleRecord() {
         mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
         mediaRecorder.onstop = () => {
             const l = document.createElement('a'); l.href = URL.createObjectURL(new Blob(recordedChunks, { type: 'video/webm' }));
-            l.download = 'Aether_Rec.webm'; l.click();
+            l.download = 'Aether_Studio_Rec.webm'; l.click();
         };
-        mediaRecorder.start(); btn.classList.add('rec-active'); btn.innerText = "STOP";
+        mediaRecorder.start(); btn.classList.add('rec-active'); btn.innerText = "REC";
     } else { mediaRecorder.stop(); btn.classList.remove('rec-active'); btn.innerText = "REC"; }
 }
 
-function saveDesign() { const l = document.createElement('a'); l.download = 'Aether.png'; l.href = canvas.toDataURL(); l.click(); }
+function saveDesign() { const l = document.createElement('a'); l.download = 'Aether_Design.png'; l.href = canvas.toDataURL(); l.click(); }
 function deleteSelected() { if(selected) { saveState(); shapes = shapes.filter(s => s !== selected); selected = null; } }
-function clearAll() { if(confirm("Nuke design?")) { saveState(); shapes = []; selected = null; } }
+function clearAll() { if(confirm("Nuke everything?")) { saveState(); shapes = []; selected = null; } }
 render();
 </script>
 </body>
