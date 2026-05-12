@@ -2,71 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER STUDIOS</title>
-    <link href="https://googleapis.com" rel="stylesheet">
-    <script src="https://cloudflare.com"></script>
+    <title>AETHER DEBUG</title>
+    <!-- Use a different source for the engine -->
+    <script src="https://unpkg.com"></script>
     <style>
-        :root { --bg: #0d0d0d; --text: #f0f0f0; --accent: #3793ff; --dot: #333; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .toolbar { display: flex; gap: 10px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 50px; margin-bottom: 20px; }
-        button { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        button:hover { background: var(--accent); color: white; }
-        .canvas-wrapper { background: #1a1a1a; border: 2px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background-image: radial-gradient(var(--dot) 1px, transparent 1px); background-size: 20px 20px; }
+        body { background: #000; color: #00ff41; font-family: monospace; text-align: center; padding: 20px; }
+        #status { padding: 10px; border: 1px solid #00ff41; margin-bottom: 20px; display: inline-block; }
+        .toolbar { margin-bottom: 20px; }
+        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        #wrapper { background: #111; border: 1px solid #333; display: inline-block; }
     </style>
 </head>
 <body>
 
-    <h1>AETHER STUDIOS</h1>
-
+    <div id="status">INITIATING...</div>
+    <br>
     <div class="toolbar">
-        <button onclick="addShape('rect')">SQUARE</button>
-        <button onclick="addShape('circle')">CIRCLE</button>
-        <button onclick="addShape('star')">STAR</button>
-        <button onclick="deleteObj()" style="border-color:#ff4d4d; color:#ff4d4d;">DELETE</button>
-        <button onclick="exportImg()" style="border-color:#2ecc71; color:#2ecc71;">SAVE</button>
+        <button onclick="addSquare()">SPAWN SQUARE</button>
     </div>
 
-    <div class="canvas-wrapper">
-        <!-- HARDCODED SIZE FIX -->
-        <canvas id="canva2" width="800" height="500"></canvas>
+    <div id="wrapper">
+        <canvas id="c" width="500" height="400"></canvas>
     </div>
 
     <script>
         let canvas;
-
-        // BOOT SEQUENCE
-        window.onload = function() {
-            canvas = new fabric.Canvas('canva2');
-            console.log("Aether Engine Online");
-        };
-
-        window.addShape = (type) => {
-            let s;
-            const style = { left: 100, top: 100, fill: '#3793ff', width: 100, height: 100 };
-            if(type === 'rect') s = new fabric.Rect(style);
-            if(type === 'circle') s = new fabric.Circle({...style, radius: 50});
-            if(type === 'star') s = new fabric.Polygon([
-                {x:50,y:0},{x:61,y:35},{x:98,y:35},{x:68,y:57},{x:79,y:91},{x:50,y:70},{x:21,y:91},{x:32,y:57},{x:2,y:35},{x:39,y:35}
-            ], style);
-            
-            if(s) {
-                canvas.add(s);
-                canvas.setActiveObject(s);
-                canvas.renderAll();
+        
+        // Wait 1 second to make sure the library is ready
+        setTimeout(() => {
+            try {
+                canvas = new fabric.Canvas('c');
+                document.getElementById('status').innerText = "SYSTEM ONLINE";
+                document.getElementById('status').style.borderColor = "#00ff41";
+            } catch (e) {
+                document.getElementById('status').innerText = "ENGINE ERROR: " + e.message;
+                document.getElementById('status').style.color = "red";
             }
-        };
+        }, 1000);
 
-        window.deleteObj = () => {
-            canvas.getActiveObjects().forEach(obj => canvas.remove(obj));
-            canvas.discardActiveObject().renderAll();
-        };
-
-        window.exportImg = () => {
-            const link = document.createElement('a');
-            link.download = 'aether_design.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        };
+        function addSquare() {
+            if(!canvas) {
+                alert("Engine not loaded yet!");
+                return;
+            }
+            const rect = new fabric.Rect({
+                left: 100, top: 100, fill: '#00ff41', width: 100, height: 100
+            });
+            canvas.add(rect);
+            canvas.renderAll();
+            console.log("Square added!");
+        }
     </script>
 </body>
 </html>
