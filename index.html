@@ -2,55 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER DEBUG</title>
-    <!-- Use a different source for the engine -->
-    <script src="https://unpkg.com"></script>
+    <title>AETHER COMPATIBILITY MODE</title>
     <style>
-        body { background: #000; color: #00ff41; font-family: monospace; text-align: center; padding: 20px; }
-        #status { padding: 10px; border: 1px solid #00ff41; margin-bottom: 20px; display: inline-block; }
+        body { background: #050505; color: #00ff41; font-family: monospace; text-align: center; padding: 20px; }
+        #status { padding: 10px; border: 1px solid #ff4d4d; margin-bottom: 20px; display: inline-block; color: #ff4d4d; }
         .toolbar { margin-bottom: 20px; }
-        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-        #wrapper { background: #111; border: 1px solid #333; display: inline-block; }
+        button { background: #00ff41; color: #000; border: none; padding: 12px 24px; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        canvas { background: #111; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <div id="status">INITIATING...</div>
+    <div id="status">CONNECTING TO ENGINE...</div>
     <br>
     <div class="toolbar">
         <button onclick="addSquare()">SPAWN SQUARE</button>
     </div>
 
-    <div id="wrapper">
-        <canvas id="c" width="500" height="400"></canvas>
-    </div>
+    <canvas id="c" width="600" height="400"></canvas>
+
+    <!-- Moving the library to the bottom of the body -->
+    <script src="https://jsdelivr.net"></script>
 
     <script>
         let canvas;
         
-        // Wait 1 second to make sure the library is ready
-        setTimeout(() => {
+        // This function checks every half-second if the library has finally loaded
+        let checkLibrary = setInterval(() => {
+            if (typeof fabric !== 'undefined') {
+                clearInterval(checkLibrary); // Stop checking
+                initEngine();
+            }
+        }, 500);
+
+        function initEngine() {
             try {
                 canvas = new fabric.Canvas('c');
-                document.getElementById('status').innerText = "SYSTEM ONLINE";
+                document.getElementById('status').innerText = "AETHER CORE ONLINE";
+                document.getElementById('status').style.color = "#00ff41";
                 document.getElementById('status').style.borderColor = "#00ff41";
             } catch (e) {
-                document.getElementById('status').innerText = "ENGINE ERROR: " + e.message;
-                document.getElementById('status').style.color = "red";
+                document.getElementById('status').innerText = "BOOT ERROR: " + e.message;
             }
-        }, 1000);
+        }
 
         function addSquare() {
             if(!canvas) {
-                alert("Engine not loaded yet!");
+                alert("Please wait for system boot...");
                 return;
             }
             const rect = new fabric.Rect({
-                left: 100, top: 100, fill: '#00ff41', width: 100, height: 100
+                left: 150, top: 150, fill: '#00ff41', width: 100, height: 100
             });
             canvas.add(rect);
             canvas.renderAll();
-            console.log("Square added!");
         }
     </script>
 </body>
