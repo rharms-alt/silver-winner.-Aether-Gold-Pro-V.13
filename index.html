@@ -2,48 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER STUDIOS | PRO GOLD</title>
+    <title>AETHER STUDIOS | PRO GOLD (FIXED)</title>
     <style>
         :root { --accent: #38bdf8; --bg: #050810; }
-        body { background: var(--bg); color: var(--accent); font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; overflow: hidden; touch-action: none; }
-        .toolbar { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 12px; margin-bottom: 5px; display: flex; gap: 5px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; width: 98%; }
-        .prop-panel { background: rgba(0,0,0,0.95); padding: 8px; border-radius: 10px; margin-bottom: 5px; display: flex; gap: 8px; align-items: center; font-size: 10px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; width: 98%; }
-        button { background: var(--accent); color: #000; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 9px; text-transform: uppercase; }
-        canvas { background: #000; border: 2px solid var(--accent); border-radius: 4px; touch-action: none; max-width: 95vw; max-height: 50vh; cursor: crosshair; }
-        input, select { background: #111; border: 1px solid var(--accent); color: white; border-radius: 4px; padding: 4px; font-size: 9px; }
-        .swatch { width: 14px; height: 14px; border-radius: 3px; cursor: pointer; border: 1px solid #fff; }
-        .active { background: #fff !important; color: #000 !important; box-shadow: 0 0 10px #fff; }
-        .rec-active { background: #ff4d4d !important; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        body { background: var(--bg); color: var(--accent); font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: center; overflow: hidden; touch-action: none; }
+        .toolbar { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 5px; display: flex; gap: 8px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; width: 95%; }
+        .prop-panel { background: rgba(0,0,0,0.9); padding: 10px; border-radius: 10px; margin-bottom: 5px; display: flex; gap: 10px; align-items: center; font-size: 11px; border: 1px solid var(--accent); flex-wrap: wrap; justify-content: center; min-height: 40px; }
+        button { background: var(--accent); color: #000; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; }
+        canvas { background: #000; border: 2px solid var(--accent); border-radius: 4px; touch-action: none; max-width: 95vw; max-height: 55vh; }
+        input { background: #111; border: 1px solid var(--accent); color: white; border-radius: 4px; padding: 4px; font-size: 10px; }
+        .active { background: #fff !important; box-shadow: 0 0 10px #fff; }
     </style>
 </head>
 <body>
     <div class="toolbar">
-        <button onclick="addShape('rect')">SQ</button>
-        <button onclick="addShape('circle')">CIR</button>
+        <button onclick="addShape('rect')">SQUARE</button>
+        <button onclick="addShape('circle')">CIRCLE</button>
         <button onclick="addText()">TEXT</button>
-        <button id="pencilBtn" onclick="togglePencil()">Pencil: OFF</button>
-        <button id="symBtn" onclick="toggleSym()">Mirror: OFF</button>
-        <button id="glowBtn" onclick="toggleGlowBrush()">Neon Brush: OFF</button>
-        <div style="display:flex; gap:3px; margin:0 5px;">
-            <div class="swatch" style="background:#38bdf8" onclick="pickColor('#38bdf8')"></div>
-            <div class="swatch" style="background:#f472b6" onclick="pickColor('#f472b6')"></div>
-            <div class="swatch" style="background:#4ade80" onclick="pickColor('#4ade80')"></div>
-            <div class="swatch" style="background:#ffffff" onclick="pickColor('#ffffff')"></div>
-        </div>
-        <button onclick="undo()">Undo</button>
-        <button id="recBtn" onclick="toggleRecord()" style="background:#555; color:white">REC</button>
-        <button onclick="saveDesign()" style="background:#2ecc71">PNG</button>
-        <button onclick="clearAll()" style="background:#ff4d4d; color:white">Reset</button>
+        <button id="pencilBtn" onclick="togglePencil()">PENCIL</button>
+        <button id="symBtn" onclick="toggleSym()">MIRROR</button>
+        <button onclick="undo()">UNDO</button>
+        <button onclick="saveDesign()" style="background:#2ecc71">SAVE PNG</button>
+        <button onclick="clearAll()" style="background:#ff4d4d; color:white">RESET</button>
     </div>
 
     <div class="prop-panel">
-        W: <input type="range" id="wPick" min="2" max="600" oninput="updateProp()">
-        H: <input type="range" id="hPick" min="2" max="600" oninput="updateProp()">
+        <div id="textEditor" style="display:none; gap:5px; align-items:center;">
+            TEXT: <input type="text" id="textInput" oninput="updateText()">
+        </div>
+        W: <input type="range" id="wPick" min="10" max="600" oninput="updateProp()">
+        H: <input type="range" id="hPick" min="10" max="600" oninput="updateProp()">
         ROT: <input type="range" id="rotPick" min="0" max="360" oninput="updateProp()">
-        COLOR: <input type="color" id="colPick" onchange="updateProp()">
-        <button onclick="changeLayer(1)">UP</button>
-        <button onclick="changeLayer(-1)">DOWN</button>
+        <input type="color" id="colPick" onchange="updateProp()">
         <button onclick="deleteSelected()" style="background:#ff4d4d; color:white">DEL</button>
     </div>
 
@@ -52,18 +42,26 @@
 <script>
 const canvas = document.getElementById('mainCanvas'), ctx = canvas.getContext('2d');
 let shapes = [], history = [], selected = null, isDragging = false, isDrawing = false;
-let pencilMode = false, symMode = false, glowBrush = false, offset = { x: 0, y: 0 };
-let mediaRecorder, recordedChunks = [];
+let pencilMode = false, symMode = false, offset = { x: 0, y: 0 };
 
-function saveState() { history.push(JSON.stringify(shapes)); if(history.length > 25) history.shift(); }
+function saveState() { history.push(JSON.stringify(shapes)); if(history.length > 30) history.shift(); }
 function undo() { if(history.length) { shapes = JSON.parse(history.pop()); selected = null; } }
-function togglePencil() { pencilMode = !pencilMode; document.getElementById('pencilBtn').innerText = `Pencil: ${pencilMode?'ON':'OFF'}`; document.getElementById('pencilBtn').classList.toggle('active'); selected = null; }
-function toggleSym() { symMode = !symMode; document.getElementById('symBtn').innerText = `Mirror: ${symMode?'ON':'OFF'}`; document.getElementById('symBtn').classList.toggle('active'); }
-function toggleGlowBrush() { glowBrush = !glowBrush; document.getElementById('glowBtn').innerText = `Neon Brush: ${glowBrush?'ON':'OFF'}`; document.getElementById('glowBtn').classList.toggle('active'); }
-function pickColor(c) { document.getElementById('colPick').value = c; if(selected) selected.color = c; }
+function togglePencil() { pencilMode = !pencilMode; document.getElementById('pencilBtn').classList.toggle('active'); selected = null; }
+function toggleSym() { symMode = !symMode; document.getElementById('symBtn').classList.toggle('active'); }
 
-function addShape(type) { saveState(); shapes.push({ type, x: 340, y: 190, w: 120, h: 120, color: document.getElementById('colPick').value, rotation: 0 }); selected = shapes[shapes.length-1]; }
-function addText() { saveState(); const t = prompt("Text:","AETHER"); if(t) shapes.push({ type: 'text', x: 250, y: 200, w: 300, h: 80, color: document.getElementById('colPick').value, content: t, rotation: 0 }); selected = shapes[shapes.length-1]; }
+function addShape(type) {
+    saveState();
+    const s = { type, x: 350, y: 200, w: 100, h: 100, color: document.getElementById('colPick').value, rotation: 0 };
+    shapes.push(s); selected = s;
+}
+
+function addText() {
+    saveState();
+    const s = { type: 'text', x: 250, y: 200, w: 300, h: 60, color: '#38bdf8', content: 'AETHER', rotation: 0 };
+    shapes.push(s); selected = s;
+}
+
+function updateText() { if(selected?.type === 'text') selected.content = document.getElementById('textInput').value; }
 
 function updateProp() {
     if(!selected) return;
@@ -73,17 +71,30 @@ function updateProp() {
     selected.rotation = parseInt(document.getElementById('rotPick').value);
 }
 
-// Snapping Logic
-function snap(val, target) { return Math.abs(val - target) < 15 ? target : val; }
-
 canvas.addEventListener('pointerdown', (e) => {
     const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) * (800/r.width), y = (e.clientY - r.top) * (500/r.height);
+    
     if(pencilMode) {
         saveState(); isDrawing = true;
-        shapes.push({ type: 'path', color: document.getElementById('colPick').value, size: Math.max(2, document.getElementById('wPick').value/25), sym: symMode, glow: glowBrush, points: [{x, y}] });
+        shapes.push({ type: 'path', color: document.getElementById('colPick').value, size: 4, sym: symMode, points: [{x, y}] });
     } else {
-        selected = [...shapes].reverse().find(s => s.type !== 'path' && x > s.x && x < s.x + s.w && y > s.y && y < s.y + s.h);
-        if(selected) { isDragging = true; offset = { x: x - selected.x, y: y - selected.y }; }
+        // Selection Logic
+        const found = [...shapes].reverse().find(s => s.type !== 'path' && x > s.x && x < s.x + s.w && y > s.y && y < s.y + s.h);
+        if(found) {
+            selected = found;
+            isDragging = true;
+            offset = { x: x - selected.x, y: y - selected.y };
+            // Sync UI
+            document.getElementById('wPick').value = selected.w;
+            document.getElementById('hPick').value = selected.h;
+            document.getElementById('rotPick').value = selected.rotation;
+            document.getElementById('colPick').value = selected.color || '#38bdf8';
+            document.getElementById('textEditor').style.display = selected.type === 'text' ? 'flex' : 'none';
+            if(selected.type === 'text') document.getElementById('textInput').value = selected.content;
+        } else {
+            selected = null;
+            document.getElementById('textEditor').style.display = 'none';
+        }
     }
 });
 
@@ -91,27 +102,32 @@ window.addEventListener('pointermove', (e) => {
     const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) * (800/r.width), y = (e.clientY - r.top) * (500/r.height);
     if(isDrawing) shapes[shapes.length-1].points.push({x, y});
     if(isDragging && selected) {
-        selected.x = snap(x - offset.x, 400 - selected.w/2); 
-        selected.y = snap(y - offset.y, 250 - selected.h/2);
+        selected.x = x - offset.x;
+        selected.y = y - offset.y;
     }
 });
-window.addEventListener('pointerup', () => { isDragging = isDrawing = false; });
+
+window.addEventListener('pointerup', () => { isDragging = false; isDrawing = false; });
 
 function render() {
-    ctx.fillStyle = '#050810'; ctx.fillRect(0,0,800,500);
+    ctx.fillStyle = '#050810';
+    ctx.fillRect(0,0,800,500);
+    
     shapes.forEach(s => {
         ctx.save();
         if(s.type === 'path') {
             ctx.strokeStyle = s.color; ctx.lineWidth = s.size; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            if(s.glow) { ctx.shadowBlur = 10; ctx.shadowColor = s.color; }
-            const drawPath = (pts) => { ctx.beginPath(); pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)); ctx.stroke(); };
-            drawPath(s.points);
-            if(s.sym) drawPath(s.points.map(p => ({ x: 800 - p.x, y: p.y })));
+            const drawP = (pts) => { ctx.beginPath(); pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)); ctx.stroke(); };
+            drawP(s.points);
+            if(s.sym) drawP(s.points.map(p => ({ x: 800 - p.x, y: p.y })));
         } else {
-            ctx.translate(s.x + s.w/2, s.y + s.h/2); ctx.rotate(s.rotation * Math.PI / 180); ctx.fillStyle = s.color;
+            ctx.translate(s.x + s.w/2, s.y + s.h/2);
+            ctx.rotate(s.rotation * Math.PI / 180);
+            ctx.fillStyle = s.color;
             if(s.type === 'rect') ctx.fillRect(-s.w/2, -s.h/2, s.w, s.h);
             else if(s.type === 'circle') { ctx.beginPath(); ctx.ellipse(0,0, s.w/2, s.h/2, 0, 0, Math.PI*2); ctx.fill(); }
             else if(s.type === 'text') { ctx.font = `bold ${s.h}px sans-serif`; ctx.textAlign="center"; ctx.fillText(s.content, 0, s.h/3); }
+            
             if(selected === s) { ctx.strokeStyle="white"; ctx.lineWidth=2; ctx.strokeRect(-s.w/2, -s.h/2, s.w, s.h); }
         }
         ctx.restore();
@@ -119,30 +135,9 @@ function render() {
     requestAnimationFrame(render);
 }
 
-function toggleRecord() {
-    const btn = document.getElementById('recBtn');
-    if (!mediaRecorder || mediaRecorder.state === "inactive") {
-        recordedChunks = [];
-        const stream = canvas.captureStream(30);
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob), a = document.createElement('a');
-            a.href = url; a.download = 'Aether_Capture.webm'; a.click();
-        };
-        mediaRecorder.start();
-        btn.classList.add('rec-active'); btn.innerText = "STOP";
-    } else {
-        mediaRecorder.stop();
-        btn.classList.remove('rec-active'); btn.innerText = "REC";
-    }
-}
-
-function changeLayer(dir) { if(!selected) return; const i = shapes.indexOf(selected); if(dir===1 && i<shapes.length-1) [shapes[i], shapes[i+1]] = [shapes[i+1], shapes[i]]; else if(dir===-1 && i>0) [shapes[i], shapes[i-1]] = [shapes[i-1], shapes[i]]; }
-function saveDesign() { const l = document.createElement('a'); l.download = 'Aether_Design.png'; l.href = canvas.toDataURL(); l.click(); }
+function saveDesign() { const l = document.createElement('a'); l.download = 'Aether.png'; l.href = canvas.toDataURL(); l.click(); }
 function deleteSelected() { if(selected) { saveState(); shapes = shapes.filter(s => s !== selected); selected = null; } }
-function clearAll() { if(confirm("Hard Reset?")) { saveState(); shapes = []; selected = null; } }
+function clearAll() { if(confirm("Clear All?")) { saveState(); shapes = []; selected = null; } }
 render();
 </script>
 </body>
