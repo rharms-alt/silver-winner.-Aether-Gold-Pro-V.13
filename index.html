@@ -2,60 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AETHER COMPATIBILITY MODE</title>
+    <title>AETHER STUDIOS | iPad Edition</title>
+    <!-- Using a very stable library source -->
+    <script src="https://cloudflare.com"></script>
     <style>
-        body { background: #050505; color: #00ff41; font-family: monospace; text-align: center; padding: 20px; }
-        #status { padding: 10px; border: 1px solid #ff4d4d; margin-bottom: 20px; display: inline-block; color: #ff4d4d; }
-        .toolbar { margin-bottom: 20px; }
-        button { background: #00ff41; color: #000; border: none; padding: 12px 24px; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        canvas { background: #111; border: 1px solid #333; }
+        body { background: #050810; color: #38bdf8; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .toolbar { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 50px; margin-bottom: 20px; display: flex; gap: 10px; border: 1px solid #38bdf8; }
+        button { background: #38bdf8; color: #050810; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        canvas { border: 2px solid #38bdf8; border-radius: 10px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
+        h1 { font-size: 18px; letter-spacing: 4px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="status">CONNECTING TO ENGINE...</div>
-    <br>
+    <h1>AETHER STUDIOS</h1>
+
     <div class="toolbar">
-        <button onclick="addSquare()">SPAWN SQUARE</button>
+        <button onclick="addShape()">SPAWN SQUARE</button>
+        <button onclick="clearCanvas()" style="background:#ff4d4d">CLEAR</button>
     </div>
 
-    <canvas id="c" width="600" height="400"></canvas>
-
-    <!-- Moving the library to the bottom of the body -->
-    <script src="https://jsdelivr.net"></script>
+    <div id="canvas-container"></div>
 
     <script>
-        let canvas;
-        
-        // This function checks every half-second if the library has finally loaded
-        let checkLibrary = setInterval(() => {
-            if (typeof fabric !== 'undefined') {
-                clearInterval(checkLibrary); // Stop checking
-                initEngine();
-            }
-        }, 500);
+        let shapes = [];
 
-        function initEngine() {
-            try {
-                canvas = new fabric.Canvas('c');
-                document.getElementById('status').innerText = "AETHER CORE ONLINE";
-                document.getElementById('status').style.color = "#00ff41";
-                document.getElementById('status').style.borderColor = "#00ff41";
-            } catch (e) {
-                document.getElementById('status').innerText = "BOOT ERROR: " + e.message;
+        function setup() {
+            let cnv = createCanvas(600, 400);
+            cnv.parent('canvas-container');
+        }
+
+        function draw() {
+            background(10, 15, 30);
+            // Draw the grid
+            stroke(255, 10);
+            for (let i = 0; i < width; i += 20) line(i, 0, i, height);
+            for (let i = 0; i < height; i += 20) line(0, i, width, i);
+
+            // Draw your shapes
+            for (let s of shapes) {
+                fill(56, 189, 248);
+                noStroke();
+                rect(s.x, s.y, 100, 100, 10);
             }
         }
 
-        function addSquare() {
-            if(!canvas) {
-                alert("Please wait for system boot...");
-                return;
-            }
-            const rect = new fabric.Rect({
-                left: 150, top: 150, fill: '#00ff41', width: 100, height: 100
-            });
-            canvas.add(rect);
-            canvas.renderAll();
+        function addShape() {
+            shapes.push({ x: random(50, 450), y: random(50, 250) });
+        }
+
+        function clearCanvas() {
+            shapes = [];
         }
     </script>
 </body>
